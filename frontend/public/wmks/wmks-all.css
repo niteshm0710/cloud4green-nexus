@@ -1,0 +1,25 @@
+/* VMware WebMKS SDK Styling */
+.wmks {
+  position: relative;
+  overflow: hidden;
+  outline: none;
+  background-color: #0b0f19;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.wmks canvas {
+  outline: none;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+  display: block;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.wmks canvas:focus {
+  outline: none;
+}
+
