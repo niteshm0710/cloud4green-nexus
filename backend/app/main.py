@@ -139,6 +139,13 @@ def vm_out(v):
         )
     }
 
+def to_utc_iso(dt: datetime | None) -> str | None:
+    if not dt:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.isoformat()
+
 def user_out(u, db: Session | None = None):
     last_login = None
     if db:
@@ -149,14 +156,14 @@ def user_out(u, db: Session | None = None):
             .limit(1)
         )
         if ll:
-            last_login = ll.isoformat()
+            last_login = to_utc_iso(ll)
     return {
         "id": u.id,
         "email": u.email,
         "full_name": u.full_name,
         "role": u.role.name,
         "is_active": u.is_active,
-        "created_at": u.created_at.isoformat() if u.created_at else None,
+        "created_at": to_utc_iso(u.created_at),
         "last_login": last_login
     }
 
@@ -328,7 +335,7 @@ def vm_get(vm_id: int, u=Depends(current_user), db: Session = Depends(get_db)):
         .limit(10)
     )
     return vm_out(v) | {
-        "recent_activity": [{"action": a.action, "at": a.created_at.isoformat()} for a in acts]
+        "recent_activity": [{"action": a.action, "at": to_utc_iso(a.created_at)} for a in acts]
     }
 
 @api.post("/vms/{vm_id}/power")
@@ -481,7 +488,7 @@ def a_overview(db: Session = Depends(get_db)):
             "user_email": u.email if u else ("System" if not l.user_id else f"User #{l.user_id}"),
             "action": l.action,
             "detail": l.detail,
-            "at": l.created_at.isoformat() if l.created_at else None
+            "at": to_utc_iso(l.created_at)
         })
 
     return {
@@ -496,7 +503,7 @@ def a_overview(db: Session = Depends(get_db)):
             "configured": bool(c),
             "host": c.host if c else None,
             "status": c.status if c else "not configured",
-            "last_sync": c.last_sync.isoformat() if c and c.last_sync else None
+            "last_sync": to_utc_iso(c.last_sync) if c else None
         },
         "recent_logs": recent_logs
     }
@@ -623,7 +630,7 @@ def a_assign_list(db: Session = Depends(get_db)):
             "vm_id": x.vm_id,
             "vm_name": v.name if v else f"VM #{x.vm_id}",
             "vm_power_state": v.power_state if v else "unknown",
-            "created_at": x.created_at.isoformat() if x.created_at else None
+            "created_at": to_utc_iso(x.created_at)
         })
     return out
 
@@ -671,7 +678,7 @@ def a_audit(limit: int = 200, db: Session = Depends(get_db)):
             "action": l.action,
             "detail": l.detail,
             "ip": l.ip,
-            "at": l.created_at.isoformat() if l.created_at else None
+            "at": to_utc_iso(l.created_at)
         })
     return out
 
@@ -711,7 +718,7 @@ def a_vm_status(db: Session = Depends(get_db)):
         "configured": bool(c),
         "host": c.host if c else None,
         "status": c.status if c else "not configured",
-        "last_sync": c.last_sync.isoformat() if c and c.last_sync else None
+        "last_sync": to_utc_iso(c.last_sync) if c else None
     }
 
 @adm.get("/support/tickets")
@@ -726,7 +733,7 @@ def a_tickets(db: Session = Depends(get_db)):
             "user_name": u.full_name if u else "Unknown",
             "subject": t.subject,
             "status": t.status,
-            "created_at": t.created_at.isoformat() if t.created_at else None
+            "created_at": to_utc_iso(t.created_at)
         })
     return out
 
@@ -754,7 +761,7 @@ def s_list(u=Depends(current_user), db: Session = Depends(get_db)):
             "user_name": owner.full_name if owner else "Unknown",
             "subject": t.subject,
             "status": t.status,
-            "created_at": t.created_at.isoformat() if t.created_at else None
+            "created_at": to_utc_iso(t.created_at)
         })
     return out
 
@@ -791,14 +798,14 @@ def s_get(tid: int, u=Depends(current_user), db: Session = Depends(get_db)):
             "user_email": sender.email if sender else "Unknown",
             "user_name": sender.full_name if sender else "User",
             "body": x.body,
-            "at": x.created_at.isoformat() if x.created_at else None
+            "at": to_utc_iso(x.created_at)
         })
     return {
         "id": t.id,
         "subject": t.subject,
         "status": t.status,
         "user_email": owner.email if owner else "Unknown",
-        "created_at": t.created_at.isoformat() if t.created_at else None,
+        "created_at": to_utc_iso(t.created_at),
         "messages": messages
     }
 
